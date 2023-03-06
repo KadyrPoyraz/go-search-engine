@@ -8,9 +8,15 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 )
+
+type Data struct {
+	fileTermFreq map[string]map[string]int
+	fileTermCount map[string]int
+}
 
 type DirContent map[string]map[string]int
 
@@ -61,8 +67,10 @@ func (l *Lexer) getNextToken() bool {
 		if unicode.IsLetter(r) {
 			n := 0
 			for ; n < len(l.content) ; {
-				is_alphanumeric := regexp.MustCompile(`^[a-zA-Z0-9]*$`).MatchString(l.content[n])
-				if is_alphanumeric {
+				//is_alphanumeric := regexp.MustCompile(``).MatchString(l.content[n])
+				isWhitespacePresent := regexp.MustCompile(`\s`).MatchString(l.content[n])
+				is_alphanumeric := regexp.MustCompile(`[$&+,:;=?@#|'<>.^*()%!-]`).MatchString(l.content[n])
+				if !is_alphanumeric && !isWhitespacePresent {
 					n += 1
 				} else {
 					break
@@ -88,8 +96,12 @@ var (
 )
 
 func main() {
+	start := time.Now()
 	allDocuments := make(DirContent)
-	readDir(targetDirectory, &allDocuments)
+	readDir(targetDirectory, allDocuments)
+
+	//fmt.Println(allDocuments)
+	fmt.Println(time.Since(start))
 }
 
 func parseXHTMLFile(filePath string) string {
@@ -106,14 +118,12 @@ func parseXHTMLFile(filePath string) string {
 	return fileContent
 }
 
-func readDir(dirPath string, dirContent *DirContent) {
+func readDir(dirPath string, dirContent DirContent) {
 	items, err := ioutil.ReadDir(dirPath)
 
 	if err != nil {
 		panic(err)
 	}
-
-	abobaContent := make(DirContent)
 
 	for _, item := range items {
 		itemPath := dirPath + "/" + item.Name()
@@ -127,8 +137,9 @@ func readDir(dirPath string, dirContent *DirContent) {
 		fileExtension := filepath.Ext(filePath)
 
 		if fileExtension == ".xhtml" {
-			if _, ok := abobaContent[filePath]; !ok {
-				abobaContent[filePath] = make(map[string]int)
+			//fmt.Println("Reading file:", filePath)
+			if _, ok := dirContent[filePath]; !ok {
+				dirContent[filePath] = make(map[string]int)
 			}
 
 			content := parseXHTMLFile(filePath)
@@ -138,17 +149,16 @@ func readDir(dirPath string, dirContent *DirContent) {
 				token := lexer.value
 				result := strings.ToUpper(strings.Join(token, ""))
 
-				if _, ok := abobaContent[filePath][result]; ok {
-					abobaContent[filePath][result] += 1
+				if _, ok := dirContent[filePath][result]; ok {
+					dirContent[filePath][result] += 1
 				} else {
-					abobaContent[filePath][result] = 1
+					dirContent[filePath][result] = 1
 				}
 
 			}
 		}
 	}
 
-	fmt.Println(abobaContent)
 }
 
 func stripTags(from string) string {

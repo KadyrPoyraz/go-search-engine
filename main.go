@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -8,21 +9,48 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 	"unicode"
 	"unicode/utf8"
 )
 
+const (
+	tagStart      = 60 // Unicode `<`
+	tagEnd         = 62 // Unicode `>`
+	indexJsonFileName = "index.json"
+)
+
+var (
+	targetDirectory = "./target_files/docs.gl"
+)
+
+
+type FileTermFreq map[string]int
+type FileTermCount map[string]int
+
 type Data struct {
-	fileTermFreq map[string]map[string]int
-	fileTermCount map[string]int
+	FileTermFreq map[string]FileTermFreq
+	FileTermCount FileTermCount
 }
 
-type DirContent map[string]map[string]int
+func (d *Data) AddFileTermFreqItem(filePath string, term string) {
+	if _, ok := d.FileTermFreq[filePath][term]; ok {
+		d.FileTermFreq[filePath][term] += 1
+	} else {
+		d.FileTermFreq[filePath][term] = 1
+	}
+}
+
+func (d *Data) AddFileTermCount(filePath string) {
+	if _, ok := d.FileTermCount[filePath]; ok {
+		d.FileTermCount[filePath] += 1
+	} else {
+		d.FileTermCount[filePath] = 1
+	}
+}
 
 type Lexer struct {
 	content []string
-	value   []string
+	value    string
 }
 
 func (l *Lexer) trimWhiteSpaces() {
@@ -39,7 +67,7 @@ func (l *Lexer) trimWhiteSpaces() {
 func (l *Lexer) chop(n int) {
 	token := l.content[0:n]
 	l.content = l.content[n:]
-	l.value = token
+	l.value = strings.ToUpper(strings.Join(token, ""))
 }
 
 func (l *Lexer) getNextToken() bool {
@@ -69,8 +97,8 @@ func (l *Lexer) getNextToken() bool {
 			for ; n < len(l.content) ; {
 				//is_alphanumeric := regexp.MustCompile(``).MatchString(l.content[n])
 				isWhitespacePresent := regexp.MustCompile(`\s`).MatchString(l.content[n])
-				is_alphanumeric := regexp.MustCompile(`[$&+,:;=?@#|'<>.^*()%!-]`).MatchString(l.content[n])
-				if !is_alphanumeric && !isWhitespacePresent {
+				isAlphanumeric := regexp.MustCompile(`[$&+,:;=?@#|'<>.^*()%!-]`).MatchString(l.content[n])
+				if !isAlphanumeric && !isWhitespacePresent {
 					n += 1
 				} else {
 					break
@@ -86,22 +114,38 @@ func (l *Lexer) getNextToken() bool {
 	return true
 }
 
-const (
-	tagStart = 60 // Unicode `<`
-	tagEnd   = 62 // Unicode `>`
-)
+func cacheData(data Data) {
+	b, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-var (
-	targetDirectory = "./target_files/docs.gl"
-)
+	err = ioutil.WriteFile(indexJsonFileName, b, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
 
 func main() {
-	start := time.Now()
-	allDocuments := make(DirContent)
-	readDir(targetDirectory, allDocuments)
+	//start := time.Now()
+	data := Data{
+		FileTermFreq: make(map[string]FileTermFreq),
+		FileTermCount: make(FileTermCount),
+	}
+	indexJsonFile, err := ioutil.ReadFile(indexJsonFileName)
 
-	//fmt.Println(allDocuments)
-	fmt.Println(time.Since(start))
+	if err != nil {
+		readDir(targetDirectory, data)
+		cacheData(data)
+	}
+
+	err = json.Unmarshal(indexJsonFile, &data)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(data)
 }
 
 func parseXHTMLFile(filePath string) string {
@@ -118,7 +162,34 @@ func parseXHTMLFile(filePath string) string {
 	return fileContent
 }
 
-func readDir(dirPath string, dirContent DirContent) {
+// readFile Converts file to string with text from file
+func readFile(filePath string) string {
+	fileExtension := filepath.Ext(filePath)
+
+
+	if fileExtension == ".xhtml" {
+		content := parseXHTMLFile(filePath)
+
+		return content
+	}
+
+	return ""
+}
+
+func collectData(data Data, filePath string, content string) {
+	data.FileTermFreq[filePath] = make(FileTermFreq)
+	lexer := Lexer{content: strings.Split(content, "")}
+
+	for lexer.getNextToken() {
+		token := lexer.value
+
+		data.AddFileTermFreqItem(filePath, token)
+		data.AddFileTermCount(filePath)
+	}
+}
+
+func readDir(dirPath string, data Data) {
+
 	items, err := ioutil.ReadDir(dirPath)
 
 	if err != nil {
@@ -129,36 +200,16 @@ func readDir(dirPath string, dirContent DirContent) {
 		itemPath := dirPath + "/" + item.Name()
 
 		if item.IsDir() {
-			readDir(itemPath, dirContent)
+			readDir(itemPath, data)
 			continue
 		}
+		content := readFile(itemPath)
 
-		filePath := itemPath
-		fileExtension := filepath.Ext(filePath)
-
-		if fileExtension == ".xhtml" {
-			//fmt.Println("Reading file:", filePath)
-			if _, ok := dirContent[filePath]; !ok {
-				dirContent[filePath] = make(map[string]int)
-			}
-
-			content := parseXHTMLFile(filePath)
-			lexer := Lexer{content: strings.Split(content, "")}
-
-			for lexer.getNextToken() {
-				token := lexer.value
-				result := strings.ToUpper(strings.Join(token, ""))
-
-				if _, ok := dirContent[filePath][result]; ok {
-					dirContent[filePath][result] += 1
-				} else {
-					dirContent[filePath][result] = 1
-				}
-
-			}
+		if len(content) < 1 {
+			continue
 		}
+		collectData(data, itemPath, content)
 	}
-
 }
 
 func stripTags(from string) string {

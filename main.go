@@ -45,6 +45,10 @@ func entry() {
 	indexDirToFilePath := indexCmd.String("dirPath", "", "The path to the dir to be indexed")
 	indexFilePath := indexCmd.String("indexFilePath", "index.json", "Name of file with indexed data")
 
+	searchCmd := flag.NewFlagSet("search", flag.ExitOnError)
+	searchIndexFile := searchCmd.String("indexFile", "", "Path to file to search for")
+	searchQuery := searchCmd.String("query", "", "Query within the index file")
+
 	if len(os.Args) < 2 {
 		fmt.Println("Expected \"index\" subcommand")
 		os.Exit(1)
@@ -53,7 +57,10 @@ func entry() {
 	switch os.Args[1] {
 	case "index":
 		fmt.Println("Index in process...")
-		indexCmd.Parse(os.Args[2:])
+		err := indexCmd.Parse(os.Args[2:])
+		if err != nil {
+			fmt.Println(err)
+		}
 
 		isIndexFileExists := checkForIndexedData(*indexFilePath)
 		if !isIndexFileExists {
@@ -61,6 +68,14 @@ func entry() {
 		}
 
 		fmt.Printf("Dir %s has been indexed into file %s\n", *indexDirToFilePath, *indexFilePath)
+	case "search":
+		fmt.Println("Search in process...")
+		err := searchCmd.Parse(os.Args[2:])
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		fmt.Printf("Search in %s file by query %s", *searchIndexFile, *searchQuery)
 	default:
 		fmt.Println("Expected \"index\" subcommand")
 		os.Exit(1)

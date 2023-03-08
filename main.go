@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"go-search-engine/utils"
@@ -11,6 +10,7 @@ import (
 
 	"go-search-engine/data"
 	"go-search-engine/lexer"
+	"go-search-engine/search"
 )
 func main() {
 	entry()
@@ -52,6 +52,19 @@ func entry() {
 			fmt.Println(err)
 		}
 
+		data := utils.GetDataFromCache(*searchIndexFile)
+
+		query := strings.Split(*searchQuery, "")
+
+		for filePath, _ := range data.FileTermFreq {
+			lexer := lexer.Lexer{Content: query}
+			fmt.Println(filePath)
+			for lexer.GetNextToken() {
+				term := lexer.Value
+				fmt.Println(term, search.Tf(term, data.FileTermFreq[filePath], data.FileTermCount[term]))
+			}
+		}
+
 		fmt.Printf("Search in %s file by query %s", *searchIndexFile, *searchQuery)
 	default:
 		fmt.Println("Expected \"index\" subcommand")
@@ -65,18 +78,6 @@ func checkForIndexedData(indexFilePath string) bool {
 	return err == nil
 }
 
-func cacheData(data data.Data, indexFilePath string) {
-	b, err := json.Marshal(data)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	err = ioutil.WriteFile(indexFilePath, b, 0644)
-	if err != nil {
-		panic(err)
-	}
-}
 
 func indexDirToFile(dirPath string, indexFilePath string) {
 	data := data.Data{
@@ -85,7 +86,7 @@ func indexDirToFile(dirPath string, indexFilePath string) {
 	}
 
 	collectDirToData(dirPath, data)
-	cacheData(data, indexFilePath)
+	utils.CacheData(data, indexFilePath)
 }
 
 func collectDirToData(dirPath string, dataStruct data.Data) {

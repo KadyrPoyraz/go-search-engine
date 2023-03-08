@@ -12,31 +12,8 @@ import (
 	"go-search-engine/data"
 	"go-search-engine/lexer"
 )
-
-const (
-	indexJsonFileName = "index.json"
-)
-
-var (
-	targetDirectory = "./target_files/docs.gl"
-)
-
 func main() {
 	entry()
-
-	//indexJsonFile, err := ioutil.ReadFile(indexJsonFileName)
-	//
-	//if err != nil {
-	//	readDir(targetDirectory, data)
-	//	cacheData(data)
-	//}
-	//
-	//err = json.Unmarshal(indexJsonFile, &data)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-
-	//fmt.Println(data)
 }
 
 func entry() {

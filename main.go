@@ -57,7 +57,7 @@ func entry() {
 
 		isIndexFileExists := checkForIndexedData(*indexFilePath)
 		if !isIndexFileExists {
-			indexDirToFile(*indexDirToFilePath, *indexfilePath)
+			indexDirToFile(*indexDirToFilePath, *indexFilePath)
 		}
 
 		fmt.Printf("Dir %s has been indexed into file %s\n", *indexDirToFilePath, *indexFilePath)

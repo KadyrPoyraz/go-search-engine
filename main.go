@@ -30,6 +30,9 @@ func entry() {
 	searchIndexFile := searchCmd.String("indexFile", "", "Path to file to search for")
 	searchQuery := searchCmd.String("query", "", "Query within the index file")
 
+	serveCmd := flag.NewFlagSet("server", flag.ExitOnError)
+	servePort := serveCmd.Int("port", 8000, "Port of running server")
+
 	if len(os.Args) < 2 {
 		fmt.Println("Expected \"index\" subcommand")
 		os.Exit(1)
@@ -57,7 +60,9 @@ func entry() {
 		}
 
 		search.GetSearchByQuery(*searchQuery, *searchIndexFile)
-
+	case "serve":
+		// TODO: Add serving of mini backand for searching
+		fmt.Printf("Some serving happening on port %s...", *servePort)
 	default:
 		fmt.Println("Expected \"index\" subcommand")
 		os.Exit(1)

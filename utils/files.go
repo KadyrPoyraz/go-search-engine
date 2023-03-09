@@ -8,8 +8,8 @@ import (
 func GrabTextFromFile(filePath string) string {
 	fileExtension := filepath.Ext(filePath)
 
-
-	if fileExtension == ".xhtml" {
+	switch fileExtension {
+	case ".xhtml":
 		bytesFile, err := os.ReadFile(filePath)
 
 		if err != nil {
@@ -20,7 +20,18 @@ func GrabTextFromFile(filePath string) string {
 		content := ParseXHTML(fileContent)
 
 		return content
-	}
+	case ".txt":
+		bytesFile, err := os.ReadFile(filePath)
 
-	return ""
+		if err != nil {
+			panic(err)
+		}
+
+		fileContent := string(bytesFile)
+		content := ClearSpaces(fileContent)
+
+		return content
+	default:
+		return ""
+	}
 }

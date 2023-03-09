@@ -6,6 +6,7 @@ import (
 	"go-search-engine/utils"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strings"
 
 	"go-search-engine/data"
@@ -56,13 +57,33 @@ func entry() {
 
 		query := strings.Split(*searchQuery, "")
 
+		var result []struct{fp string; tf float64}
+
 		for filePath, _ := range data.FileTermFreq {
+			rank := float64(0)
 			lexer := lexer.Lexer{Content: query}
-			fmt.Println(filePath)
 			for lexer.GetNextToken() {
 				term := lexer.Value
-				fmt.Println(term, search.Tf(term, data.FileTermFreq[filePath], data.FileTermCount[term]))
+				tf := search.Tf(term, data.FileTermFreq[filePath], data.FileTermCount[filePath])
+				idf := search.Idf(term, data)
+
+				rank = tf * idf
 			}
+
+			tfTable := struct{fp string; tf float64}{
+				fp: filePath,
+				tf: rank,
+			}
+			result = append(result, tfTable)
+		}
+
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].tf > result[j].tf
+		})
+		result = result[:10]
+
+		for i := 0; i < len(result); i++ {
+			fmt.Println(result[i])
 		}
 
 		fmt.Printf("Search in %s file by query %s", *searchIndexFile, *searchQuery)

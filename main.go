@@ -34,7 +34,7 @@ func entry() {
 	servePort := serveCmd.Int("port", 8000, "Port of running server")
 
 	if len(os.Args) < 2 {
-		fmt.Println("Expected \"index\" subcommand")
+		fmt.Println("Expected \"index\", \"search\" or \"serve\" subcommand")
 		os.Exit(1)
 	}
 
@@ -48,7 +48,7 @@ func entry() {
 
 		isIndexFileExists := checkForIndexedData(*indexFilePath)
 		if !isIndexFileExists {
-			indexDirToFile(*indexDirToFilePath, *indexFilePath)
+			indexDirToFile(*indexDirToFilePath, *searchIndexFile)
 		}
 
 		fmt.Printf("Dir %s has been indexed into file %s\n", *indexDirToFilePath, *indexFilePath)
@@ -59,7 +59,8 @@ func entry() {
 			fmt.Println(err)
 		}
 
-		search.GetSearchByQuery(*searchQuery, *searchIndexFile)
+		data := utils.GetDataFromCache(*indexDirToFilePath)
+		search.GetSearchByQuery(*searchQuery, data)
 	case "serve":
 		// TODO: Add serving of mini backand for searching
 		fmt.Printf("Some serving happening on port %b...", *servePort)
@@ -111,7 +112,6 @@ func collectDirToData(dirPath string, dataStruct data.Data) {
 }
 
 func collectData(data data.Data, filePath string, content string) {
-	data.FileTermFreq[filePath] = make(map[string]int)
 	lexer := lexer.Lexer{Content: strings.Split(content, "")}
 
 	for lexer.GetNextToken() {

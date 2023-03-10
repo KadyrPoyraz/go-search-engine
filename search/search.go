@@ -1,21 +1,24 @@
 package search
 
 import (
-	"fmt"
 	"go-search-engine/data"
 	"go-search-engine/lexer"
-	"go-search-engine/utils"
 	"math"
 	"sort"
 	"strings"
 )
 
-func GetSearchByQuery(stringQuery string, indexFile string) {
-	data := utils.GetDataFromCache(indexFile)
+type ResultItem struct {
+	filePath string
+	rank 	 float64
+}
 
+type Result []ResultItem
+
+func GetSearchByQuery(stringQuery string, data data.Data) Result {
 	query := strings.Split(stringQuery, "")
 
-	var result []struct{fp string; tf float64}
+	var result Result
 
 	for filePath, _ := range data.FileTermFreq {
 		rank := float64(0)
@@ -23,20 +26,16 @@ func GetSearchByQuery(stringQuery string, indexFile string) {
 		for lexer.GetNextToken() {
 			term := lexer.Value
 			tf := tf(term, data.FileTermFreq[filePath], data.FileTermCount[filePath])
-			idf := idf(term, data)
+			idf := idf(term, data.FileTermFreq)
 
 			rank += tf * idf
 		}
 
-		tfTable := struct{fp string; tf float64}{
-			fp: filePath,
-			tf: rank,
-		}
-		result = append(result, tfTable)
+		result = append(result, ResultItem{filePath: filePath, rank: rank})
 	}
 
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].tf > result[j].tf
+		return result[i].rank > result[j].rank
 	})
 	topOfResults := 10
 
@@ -45,10 +44,7 @@ func GetSearchByQuery(stringQuery string, indexFile string) {
 	}
 	result = result[:topOfResults]
 
-	for i := 0; i < len(result); i++ {
-		fmt.Println(result[i])
-	}
-
+	return result
 }
 
 func getItemOrZero(key string, value map[string]int) int {
@@ -66,12 +62,11 @@ func tf(t string, d map[string]int, tc int) float64{
 	return a / b
 }
 
-func idf(t string, d data.Data) float64 {
-	docs := d.FileTermFreq
-	N := float64(len(docs))
+func idf(t string, d map[string]map[string]int) float64 {
+	N := float64(len(d))
 	M := float64(0)
 
-	for _, tfTable := range docs {
+	for _, tfTable := range d {
 		if _, ok := tfTable[t]; ok {
 			M += 1
 		}

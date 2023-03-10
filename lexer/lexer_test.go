@@ -15,8 +15,8 @@ func TestLexer_GetNextToken(t *testing.T) {
 	tests := []Test{
 		{
 			name: "Test if lexer.GetNextToken returns correct data",
-			lexer: Lexer{Content: strings.Split("test(someArgument) {}", "")},
-			result: []string{"TEST", "(", "SOMEARGUMENT", ")", "{", "}"},
+			lexer: Lexer{Content: strings.Split("test(someArgument) {} 1234 5", "")},
+			result: []string{"TEST", "(", "SOMEARGUMENT", ")", "{", "}", "1234", "5"},
 		},
 	}
 

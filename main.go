@@ -46,20 +46,17 @@ func entry() {
 			fmt.Println(err)
 		}
 
-		isIndexFileExists := checkForIndexedData(*indexFilePath)
-		if !isIndexFileExists {
-			indexDirToFile(*indexDirToFilePath, *searchIndexFile)
-		}
+		indexDirToFile(*indexDirToFilePath, *indexFilePath)
 
 		fmt.Printf("Dir %s has been indexed into file %s\n", *indexDirToFilePath, *indexFilePath)
 	case "search":
 		fmt.Println("Search in process...")
 		err := searchCmd.Parse(os.Args[2:])
 		if err != nil {
-			fmt.Println(err)
+			panic(err)
 		}
 
-		data := utils.GetDataFromCache(*indexDirToFilePath)
+		data := utils.GetDataFromCache(*searchIndexFile)
 		search.GetSearchByQuery(*searchQuery, data)
 	case "serve":
 		// TODO: Add serving of mini backand for searching
@@ -69,13 +66,6 @@ func entry() {
 		os.Exit(1)
 	}
 }
-
-func checkForIndexedData(indexFilePath string) bool {
-	_, err := os.Stat(indexFilePath)
-
-	return err == nil
-}
-
 
 func indexDirToFile(dirPath string, indexFilePath string) {
 	data := data.Data{
@@ -107,7 +97,13 @@ func collectDirToData(dirPath string, dataStruct data.Data) {
 			continue
 		}
 
-		lexer := lexer.Lexer{Content: strings.Split(content, "")}
-		lexer.PutContentToData(dataStruct, itemPath)
+		l := lexer.Lexer{Content: strings.Split(content, "")}
+
+		for l.GetNextToken() {
+			term := l.Value
+
+			dataStruct.AddFileTermFreqItem(itemPath, term)
+			dataStruct.AddFileTermCount(itemPath)
+		}
 	}
 }

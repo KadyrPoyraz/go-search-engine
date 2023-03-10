@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"go-search-engine/data"
 	"regexp"
 	"strconv"
 	"strings"
@@ -71,4 +72,13 @@ func (l *Lexer) GetNextToken() bool {
 	l.chop(1)
 
 	return true
+}
+
+func (l *Lexer) PutContentToData(data data.Data, filePath string) {
+	for l.GetNextToken() {
+		token := l.Value
+
+		data.AddFileTermFreqItem(filePath, token)
+		data.AddFileTermCount(filePath)
+	}
 }

@@ -6,6 +6,10 @@ type Data struct {
 }
 
 func (d *Data) AddFileTermFreqItem(filePath string, term string) {
+	if _, ok := d.FileTermFreq[filePath]; !ok {
+		d.FileTermFreq[filePath] = make(map[string]int)
+	}
+
 	if _, ok := d.FileTermFreq[filePath][term]; ok {
 		d.FileTermFreq[filePath][term] += 1
 	} else {

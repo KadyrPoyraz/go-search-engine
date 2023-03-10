@@ -52,7 +52,12 @@ func TestGetSearchByQuery(t *testing.T) {
 			for _, file := range test.files {
 				for fileName, fileContent := range file {
 					l := lexer.Lexer{Content: strings.Split(fileContent, "")}
-					l.PutContentToData(d, fileName)
+
+					for l.GetNextToken() {
+						term := l.Value
+						d.AddFileTermFreqItem(fileName, term)
+						d.AddFileTermCount(fileName)
+					}
 				}
 			}
 

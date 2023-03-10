@@ -26,7 +26,7 @@ func GetDataFromCache(indexFilePath string) data.Data {
 
 	err = json.Unmarshal(indexJsonFile, &data)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
 	return data

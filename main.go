@@ -107,17 +107,7 @@ func collectDirToData(dirPath string, dataStruct data.Data) {
 			continue
 		}
 
-		collectData(dataStruct, itemPath, content)
-	}
-}
-
-func collectData(data data.Data, filePath string, content string) {
-	lexer := lexer.Lexer{Content: strings.Split(content, "")}
-
-	for lexer.GetNextToken() {
-		token := lexer.Value
-
-		data.AddFileTermFreqItem(filePath, token)
-		data.AddFileTermCount(filePath)
+		lexer := lexer.Lexer{Content: strings.Split(content, "")}
+		lexer.PutContentToData(dataStruct, itemPath)
 	}
 }

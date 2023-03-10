@@ -62,7 +62,7 @@ func entry() {
 		search.GetSearchByQuery(*searchQuery, *searchIndexFile)
 	case "serve":
 		// TODO: Add serving of mini backand for searching
-		fmt.Printf("Some serving happening on port %s...", *servePort)
+		fmt.Printf("Some serving happening on port %b...", *servePort)
 	default:
 		fmt.Println("Expected \"index\" subcommand")
 		os.Exit(1)

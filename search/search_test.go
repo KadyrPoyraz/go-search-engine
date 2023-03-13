@@ -9,10 +9,10 @@ import (
 )
 
 type Test struct {
-	name   string
-	query  string
-	files  []map[string]string
-	result Result
+	name     string
+	query    string
+	files    []map[string]string
+	expected Result
 }
 
 func TestGetSearchByQuery(t *testing.T) {
@@ -24,7 +24,7 @@ func TestGetSearchByQuery(t *testing.T) {
 				{"fileOne": "Here is the dog in this document"},
 				{"fileTwo": "Here is the fox in this document"},
 			},
-			result: Result{
+			expected: Result{
 				ResultItem{filePath: "fileOne", rank: 0.043004285094854454},
 				ResultItem{filePath: "fileTwo", rank: 0},
 			},
@@ -36,7 +36,7 @@ func TestGetSearchByQuery(t *testing.T) {
 				{"fileOne": "Here is the dog in this document"},
 				{"fileTwo": "Here is the fox in this document"},
 			},
-			result: Result{
+			expected: Result{
 				ResultItem{filePath: "fileTwo", rank: 0.043004285094854454},
 				ResultItem{filePath: "fileOne", rank: 0},
 			},
@@ -63,8 +63,8 @@ func TestGetSearchByQuery(t *testing.T) {
 
 			result := GetSearchByQuery(test.query, d)
 
-			if !reflect.DeepEqual(test.result, result) {
-				t.Errorf( "FAILED: expected %v, got %v\n", test.result, result)
+			if !reflect.DeepEqual(test.expected, result) {
+				t.Errorf( "FAILED: expected %v, got %v\n", test.expected, result)
 			}
 		})
 	}

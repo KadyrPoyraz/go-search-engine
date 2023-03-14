@@ -28,8 +28,9 @@ func (l *Lexer) TrimWhiteSpaces() {
 func (l *Lexer) validateToken(token []string) string {
 	eng := porter2.Stemmer
 
-	validatedToken := strings.ToUpper(strings.Join(token, ""))
+	validatedToken := strings.Join(token, "")
 	validatedToken = eng.Stem(validatedToken)
+	validatedToken = strings.ToUpper(validatedToken)
 
 	return validatedToken
 }

@@ -14,11 +14,9 @@ import (
 	"go-search-engine/lexer"
 	"go-search-engine/search"
 )
-func main() {
-	start := time.Now()
-	entry()
 
-	fmt.Printf("\n Result time: %s", time.Since(start))
+func main() {
+	entry()
 }
 
 func entry() {
@@ -108,3 +106,6 @@ func collectDirToData(dirPath string, dataStruct data.Data) {
 		}
 	}
 }
+
+// TODO: Add saving of indexed data in postgreSQL database
+// TODO: Add stemming for the search

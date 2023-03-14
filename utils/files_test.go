@@ -1,19 +1,8 @@
 package utils
 
 import (
-	"os"
 	"testing"
 )
-
-func getCurrentDirPath() string {
-	path, err := os.Getwd()
-
-	if err != nil {
-		panic(err)
-	}
-
-	return path
-}
 
 type GrabTextFromFileTest struct {
 	name 		  string
@@ -22,7 +11,7 @@ type GrabTextFromFileTest struct {
 	expectedError error
 }
 
-var pathToTestFiles = getCurrentDirPath() + "/files_testdata/GrabTextFromFileTest/"
+var pathToTestFiles = GetCurrentDirPath() + "/files_testdata/GrabTextFromFileTest/"
 
 var grabTextFromFileTests = []GrabTextFromFileTest{
 	{

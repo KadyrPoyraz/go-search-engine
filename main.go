@@ -106,5 +106,5 @@ func collectDirToData(dirPath string, dataStruct data.Data) {
 	}
 }
 
+// TODO: Wrap indexing with goroutines
 // TODO: Add saving of indexed data in postgreSQL database
-// TODO: Add stemming for the search

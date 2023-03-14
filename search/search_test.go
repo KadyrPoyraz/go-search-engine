@@ -25,8 +25,8 @@ func TestGetSearchByQuery(t *testing.T) {
 				{"fileTwo": "Here is the fox in this document"},
 			},
 			expected: Result{
-				ResultItem{filePath: "fileOne", rank: 0.043004285094854454},
-				ResultItem{filePath: "fileTwo", rank: 0},
+				ResultItem{FilePath: "fileOne", Rank: 0.043004285094854454},
+				ResultItem{FilePath: "fileTwo", Rank: 0},
 			},
 		},
 		{
@@ -37,8 +37,8 @@ func TestGetSearchByQuery(t *testing.T) {
 				{"fileTwo": "Here is the fox in this document"},
 			},
 			expected: Result{
-				ResultItem{filePath: "fileTwo", rank: 0.043004285094854454},
-				ResultItem{filePath: "fileOne", rank: 0},
+				ResultItem{FilePath: "fileTwo", Rank: 0.043004285094854454},
+				ResultItem{FilePath: "fileOne", Rank: 0},
 			},
 		},
 	}

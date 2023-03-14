@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-	"time"
 
 	"go-search-engine/data"
 	"go-search-engine/lexer"

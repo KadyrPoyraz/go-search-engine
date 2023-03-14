@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/dchest/stemmer/porter2"
 )
 
 type Lexer struct {
@@ -23,10 +25,19 @@ func (l *Lexer) TrimWhiteSpaces() {
 	}
 }
 
+func (l *Lexer) validateToken(token []string) string {
+	eng := porter2.Stemmer
+
+	validatedToken := strings.ToUpper(strings.Join(token, ""))
+	validatedToken = eng.Stem(validatedToken)
+
+	return validatedToken
+}
+
 func (l *Lexer) chop(n int) {
 	token := l.Content[0:n]
 	l.Content = l.Content[n:]
-	l.Value = strings.ToUpper(strings.Join(token, ""))
+	l.Value = l.validateToken(token)
 }
 
 func (l *Lexer) GetNextToken() bool {

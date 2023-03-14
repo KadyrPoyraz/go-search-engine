@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"go-search-engine/server"
 	"go-search-engine/utils"
 	"io/ioutil"
 	"os"
@@ -59,8 +60,8 @@ func entry() {
 		data := utils.GetDataFromCache(*searchIndexFile)
 		search.GetSearchByQuery(*searchQuery, data)
 	case "serve":
-		// TODO: Add serving of mini backand for searching
-		fmt.Printf("Some serving happening on port %b...", *servePort)
+		fmt.Printf("Serving on port %d...", *servePort)
+		server.StartServer(*servePort)
 	default:
 		fmt.Println("Expected \"index\" subcommand")
 		os.Exit(1)

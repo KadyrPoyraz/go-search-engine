@@ -9,8 +9,8 @@ import (
 )
 
 type ResultItem struct {
-	filePath string
-	rank 	 float64
+	FilePath string
+	Rank 	 float64
 }
 
 type Result []ResultItem
@@ -31,11 +31,11 @@ func GetSearchByQuery(stringQuery string, data data.Data) Result {
 			rank += tf * idf
 		}
 
-		result = append(result, ResultItem{filePath: filePath, rank: rank})
+		result = append(result, ResultItem{FilePath: filePath, Rank: rank})
 	}
 
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].rank > result[j].rank
+		return result[i].Rank > result[j].Rank
 	})
 	topOfResults := 10
 

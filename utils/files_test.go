@@ -11,17 +11,15 @@ type GrabTextFromFileTest struct {
 	expectedError error
 }
 
-var pathToTestFiles = GetCurrentDirPath() + "/files_testdata/GrabTextFromFileTest/"
-
 var grabTextFromFileTests = []GrabTextFromFileTest{
 	{
 		name: "Test grabbing from xhtml files",
-		filepath: pathToTestFiles + "testFile.xhtml",
+		filepath: PathToTestFiles + "testFile.xhtml",
 		expected: "Expected data is: Some test data expected after grabbing text from .xhtml files",
 	},
 	{
 		name: "Test grabbing from txt files",
-		filepath: pathToTestFiles + "testFile.txt",
+		filepath: PathToTestFiles + "testFile.txt",
 		expected: "Expected data is: Some test data expected after grabbing text from .txt files",
 	},
 	{

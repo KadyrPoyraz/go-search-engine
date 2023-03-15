@@ -17,22 +17,59 @@ type Result []ResultItem
 
 func GetSearchByQuery(stringQuery string, data data.Data) Result {
 	query := strings.Split(stringQuery, "")
+	ch := make(chan ResultItem)
+	quit := make(chan bool)
 
 	var result Result
+	dataFilePaths := make([]string, len(data.FileTermFreq))
 
+	i := 0
 	for filePath, _ := range data.FileTermFreq {
-		rank := float64(0)
-		lexer := lexer.Lexer{Content: query}
-		for lexer.GetNextToken() {
-			term := lexer.Value
-			tf := tf(term, data.FileTermFreq[filePath], data.FileTermCount[filePath])
-			idf := idf(term, data.FileTermFreq)
+		dataFilePaths[i] = filePath
+		i += 1
+	}
 
-			rank += tf * idf
+	for ;len(dataFilePaths) > 0; {
+		itemsInBatch := 500
+		if len(dataFilePaths) < itemsInBatch {
+			itemsInBatch = len(dataFilePaths)
 		}
 
-		result = append(result, ResultItem{FilePath: filePath, Rank: rank})
+		targetFiles := dataFilePaths[0:itemsInBatch]
+		dataFilePaths = dataFilePaths[itemsInBatch:]
+
+		go func(closeChanel bool){
+
+			for _, filePath := range targetFiles {
+				rank := float64(0)
+				lexer := lexer.Lexer{Content: query}
+				for lexer.GetNextToken() {
+					term := lexer.Value
+					tf := tf(term, data.FileTermFreq[filePath], data.FileTermCount[filePath])
+					idf := idf(term, data.FileTermFreq)
+
+					rank += tf * idf
+				}
+
+				ch <- ResultItem{FilePath: filePath, Rank: rank}
+			}
+			if closeChanel {
+				quit <- true
+			}
+		}(len(dataFilePaths) == 0)
 	}
+
+	func(){
+		for {
+			select {
+			case res := <-ch:
+				//fmt.Println(res)
+				result = append(result, res)
+			case <-quit:
+				return
+			}
+		}
+	}()
 
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Rank > result[j].Rank

@@ -68,7 +68,7 @@ func (l *Lexer) GetNextToken() bool {
 			for ; n < len(l.Content) ; {
 				//is_alphanumeric := regexp.MustCompile(``).MatchString(l.Content[n])
 				isWhitespacePresent := regexp.MustCompile(`\s`).MatchString(l.Content[n])
-				isAlphanumeric := regexp.MustCompile(`[$&+,:;=?@#|'<>.^*()%!-]`).MatchString(l.Content[n])
+				isAlphanumeric := regexp.MustCompile(`[$&+,:_;=?@#|'<>.^*()%!-]`).MatchString(l.Content[n])
 				if !isAlphanumeric && !isWhitespacePresent {
 					n += 1
 				} else {

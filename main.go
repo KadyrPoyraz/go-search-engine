@@ -3,15 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"go-search-engine/data"
+	"go-search-engine/lexer"
+	"go-search-engine/search"
 	"go-search-engine/server"
 	"go-search-engine/utils"
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
-
-	"go-search-engine/data"
-	"go-search-engine/lexer"
-	"go-search-engine/search"
+	"time"
 )
 
 func main() {
@@ -66,16 +67,59 @@ func entry() {
 }
 
 func indexDirToFile(dirPath string, indexFilePath string) {
+	start := time.Now()
+	filePaths := getFilePaths(dirPath)
+	ch := make(chan map[string][]string)
 	data := data.Data{
 		FileTermFreq: make(map[string]map[string]int),
 		FileTermCount: make(map[string]int),
 	}
 
-	collectDirToData(dirPath, data)
-	utils.CacheData(data, indexFilePath)
+	for ;len(filePaths) > 0; {
+		itemsInBatch := 200
+		if len(filePaths) < itemsInBatch {
+			itemsInBatch = len(filePaths)
+		}
+
+		targetFiles := filePaths[0:itemsInBatch]
+		filePaths = filePaths[itemsInBatch:]
+
+		go getFilesData(targetFiles, ch)
+		//utils.CacheData(data, indexFilePath)
+	}
+
+	for msg := range ch {
+		for filePath, terms := range msg {
+			for _, term := range terms {
+				data.AddFileTermFreqItem(filePath, term)
+				data.AddFileTermCount(filePath)
+			}
+		}
+	}
+	fmt.Println("Time:", time.Since(start))
 }
 
-func collectDirToData(dirPath string, dataStruct data.Data) {
+func getDataFromFile(filePath string) []string {
+	content := utils.GrabTextFromFile(filePath)
+	var terms []string
+
+	if len(content) < 1 {
+		return []string{}
+	}
+
+	l := lexer.Lexer{Content: strings.Split(content, "")}
+
+	for l.GetNextToken() {
+		term := l.Value
+
+		terms = append(terms, term)
+	}
+
+	return terms
+}
+
+func getFilePaths(dirPath string) []string {
+	var pathsList []string
 	items, err := ioutil.ReadDir(dirPath)
 
 	if err != nil {
@@ -86,24 +130,26 @@ func collectDirToData(dirPath string, dataStruct data.Data) {
 		itemPath := dirPath + "/" + item.Name()
 
 		if item.IsDir() {
-			collectDirToData(itemPath, dataStruct)
+			paths := getFilePaths(itemPath)
+			pathsList = append(pathsList, paths...)
 			continue
 		}
-		content := utils.GrabTextFromFile(itemPath)
-
-		if len(content) < 1 {
-			continue
+		itemExt := path.Ext(itemPath)
+		if itemExt == ".xhtml" || itemExt == ".txt" {
+			pathsList = append(pathsList, itemPath)
 		}
-
-		l := lexer.Lexer{Content: strings.Split(content, "")}
-
-		for l.GetNextToken() {
-			term := l.Value
-
-			dataStruct.AddFileTermFreqItem(itemPath, term)
-			dataStruct.AddFileTermCount(itemPath)
-		}
+		//pathsList = append(pathsList, itemPath)
 	}
+
+	return pathsList
+}
+
+func getFilesData(paths []string, ch chan map[string][]string) {
+	for _, filePath := range paths {
+		terms := getDataFromFile(filePath)
+		ch <- map[string][]string{filePath: terms}
+	}
+	close(ch)
 }
 
 // TODO: Wrap indexing with goroutines

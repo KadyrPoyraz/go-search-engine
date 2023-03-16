@@ -61,5 +61,4 @@ func entry() {
 	}
 }
 
-// TODO: Wrap indexing with goroutines
 // TODO: Add saving of indexed data in postgreSQL database

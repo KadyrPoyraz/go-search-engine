@@ -1,7 +1,6 @@
 package index
 
 import (
-	"fmt"
 	"go-search-engine/data"
 	"go-search-engine/lexer"
 	"go-search-engine/utils"
@@ -9,11 +8,9 @@ import (
 	"path"
 	"strings"
 	"sync"
-	"time"
 )
 
 func CreateIndexFileOfDir(dirPath string, indexFilePath string) {
-	start := time.Now()
 	filePaths := getFilePaths(dirPath)
 	ch := make(chan map[string][]string)
 	var wg sync.WaitGroup
@@ -31,11 +28,11 @@ func CreateIndexFileOfDir(dirPath string, indexFilePath string) {
 		targetFiles := filePaths[0:itemsInBatch]
 		filePaths = filePaths[itemsInBatch:]
 
+		wg.Add(1)
 		go getFilesData(targetFiles, ch, &wg)
 	}
 
 	go func() {
-		fmt.Println("Channel closed!")
 		wg.Wait()
 		close(ch)
 	}()
@@ -49,7 +46,6 @@ func CreateIndexFileOfDir(dirPath string, indexFilePath string) {
 		}
 	}
 	utils.CacheData(data, indexFilePath)
-	fmt.Println("Time:", time.Since(start))
 }
 
 func getDataFromFile(filePath string) []string {
@@ -98,7 +94,6 @@ func getFilePaths(dirPath string) []string {
 }
 
 func getFilesData(paths []string, ch chan map[string][]string, wg *sync.WaitGroup) {
-	wg.Add(1)
 	defer wg.Done()
 	for _, filePath := range paths {
 		terms := getDataFromFile(filePath)

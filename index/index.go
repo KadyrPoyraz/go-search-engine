@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"path"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -15,6 +16,7 @@ func CreateIndexFileOfDir(dirPath string, indexFilePath string) {
 	start := time.Now()
 	filePaths := getFilePaths(dirPath)
 	ch := make(chan map[string][]string)
+	var wg sync.WaitGroup
 	data := data.Data{
 		FileTermFreq: make(map[string]map[string]int),
 		FileTermCount: make(map[string]int),
@@ -29,9 +31,14 @@ func CreateIndexFileOfDir(dirPath string, indexFilePath string) {
 		targetFiles := filePaths[0:itemsInBatch]
 		filePaths = filePaths[itemsInBatch:]
 
-		go getFilesData(targetFiles, ch)
-		//utils.CacheData(data, indexFilePath)
+		go getFilesData(targetFiles, ch, &wg)
 	}
+
+	go func() {
+		fmt.Println("Channel closed!")
+		wg.Wait()
+		close(ch)
+	}()
 
 	for msg := range ch {
 		for filePath, terms := range msg {
@@ -41,6 +48,7 @@ func CreateIndexFileOfDir(dirPath string, indexFilePath string) {
 			}
 		}
 	}
+	utils.CacheData(data, indexFilePath)
 	fmt.Println("Time:", time.Since(start))
 }
 
@@ -89,10 +97,11 @@ func getFilePaths(dirPath string) []string {
 	return pathsList
 }
 
-func getFilesData(paths []string, ch chan map[string][]string) {
+func getFilesData(paths []string, ch chan map[string][]string, wg *sync.WaitGroup) {
+	wg.Add(1)
+	defer wg.Done()
 	for _, filePath := range paths {
 		terms := getDataFromFile(filePath)
 		ch <- map[string][]string{filePath: terms}
 	}
-	close(ch)
 }

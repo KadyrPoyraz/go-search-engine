@@ -6,6 +6,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"sync"
 )
 
 type ResultItem struct {
@@ -17,8 +18,8 @@ type Result []ResultItem
 
 func GetSearchByQuery(stringQuery string, data data.Data) Result {
 	query := strings.Split(stringQuery, "")
+	var wg sync.WaitGroup
 	ch := make(chan ResultItem)
-	quit := make(chan bool)
 
 	var result Result
 	dataFilePaths := make([]string, len(data.FileTermFreq))
@@ -30,7 +31,7 @@ func GetSearchByQuery(stringQuery string, data data.Data) Result {
 	}
 
 	for ;len(dataFilePaths) > 0; {
-		itemsInBatch := 500
+		itemsInBatch := 200
 		if len(dataFilePaths) < itemsInBatch {
 			itemsInBatch = len(dataFilePaths)
 		}
@@ -38,38 +39,18 @@ func GetSearchByQuery(stringQuery string, data data.Data) Result {
 		targetFiles := dataFilePaths[0:itemsInBatch]
 		dataFilePaths = dataFilePaths[itemsInBatch:]
 
-		go func(closeChanel bool){
-
-			for _, filePath := range targetFiles {
-				rank := float64(0)
-				lexer := lexer.Lexer{Content: query}
-				for lexer.GetNextToken() {
-					term := lexer.Value
-					tf := tf(term, data.FileTermFreq[filePath], data.FileTermCount[filePath])
-					idf := idf(term, data.FileTermFreq)
-
-					rank += tf * idf
-				}
-
-				ch <- ResultItem{FilePath: filePath, Rank: rank}
-			}
-			if closeChanel {
-				quit <- true
-			}
-		}(len(dataFilePaths) == 0)
+		wg.Add(1)
+		go getTfIdfByQuery(targetFiles, data, query, ch, &wg)
 	}
 
-	func(){
-		for {
-			select {
-			case res := <-ch:
-				//fmt.Println(res)
-				result = append(result, res)
-			case <-quit:
-				return
-			}
-		}
+	go func() {
+		wg.Wait()
+		close(ch)
 	}()
+
+	for msg := range ch {
+		result = append(result, msg)
+	}
 
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Rank > result[j].Rank
@@ -82,6 +63,24 @@ func GetSearchByQuery(stringQuery string, data data.Data) Result {
 	result = result[:topOfResults]
 
 	return result
+}
+
+func getTfIdfByQuery(filesPaths []string, data data.Data, query []string, ch chan ResultItem, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for _, filePath := range filesPaths {
+		rank := float64(0)
+		lexer := lexer.Lexer{Content: query}
+		for lexer.GetNextToken() {
+			term := lexer.Value
+			tf := tf(term, data.FileTermFreq[filePath], data.FileTermCount[filePath])
+			idf := idf(term, data.FileTermFreq)
+
+			rank += tf * idf
+		}
+
+		ch <- ResultItem{FilePath: filePath, Rank: rank}
+	}
 }
 
 func getItemOrZero(key string, value map[string]int) int {

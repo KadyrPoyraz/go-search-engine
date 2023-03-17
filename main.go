@@ -62,3 +62,4 @@ func entry() {
 }
 
 // TODO: Add saving of indexed data in postgreSQL database
+// TODO: Add config file

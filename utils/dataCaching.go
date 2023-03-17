@@ -31,3 +31,5 @@ func GetDataFromCache(indexFilePath string) data.Data {
 
 	return data
 }
+
+// TODO: Make caching more abstract

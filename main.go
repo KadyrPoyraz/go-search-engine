@@ -15,6 +15,11 @@ func main() {
 }
 
 func entry() {
+    config, err := utils.LoadConfig()
+    if err != nil {
+        fmt.Println(err)
+    }
+
 	fmt.Println("Starting the application...")
 	indexCmd := flag.NewFlagSet("index", flag.ExitOnError)
 	indexDirToFilePath := indexCmd.String("dirPath", "", "The path to the dir to be indexed")
@@ -25,7 +30,7 @@ func entry() {
 	searchQuery := searchCmd.String("query", "", "Query within the index file")
 
 	serveCmd := flag.NewFlagSet("server", flag.ExitOnError)
-	servePort := serveCmd.Int("port", 8000, "Port of running server")
+	servePort := serveCmd.Int("port", int(config.Server.Port), "Port of running server")
 
 	if len(os.Args) < 2 {
 		fmt.Println("Expected \"index\", \"search\" or \"serve\" subcommand")

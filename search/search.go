@@ -30,14 +30,17 @@ func GetSearchByQuery(stringQuery string, data data.Data) Result {
 		i += 1
 	}
 
-	for ;len(dataFilePaths) > 0; {
-		itemsInBatch := 200
-		if len(dataFilePaths) < itemsInBatch {
-			itemsInBatch = len(dataFilePaths)
-		}
+    totalItems := len(dataFilePaths)
+    itemsInBatch := 200
 
-		targetFiles := dataFilePaths[0:itemsInBatch]
-		dataFilePaths = dataFilePaths[itemsInBatch:]
+    for i := 0; i < totalItems; i += itemsInBatch {
+        limit := itemsInBatch
+        if i + itemsInBatch > totalItems {
+            limit = totalItems - i
+        }
+
+		targetFiles := dataFilePaths[0:limit]
+		dataFilePaths = dataFilePaths[limit:]
 
 		wg.Add(1)
 		go getTfIdfByQuery(targetFiles, data, query, ch, &wg)

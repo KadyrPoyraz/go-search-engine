@@ -19,14 +19,17 @@ func CreateIndexFileOfDir(dirPath string, indexFilePath string) {
 		FileTermCount: make(map[string]int),
 	}
 
-	for ;len(filePaths) > 0; {
-		itemsInBatch := 200
-		if len(filePaths) < itemsInBatch {
-			itemsInBatch = len(filePaths)
-		}
+    totalItems := len(filePaths)
+    itemsInBatch := 200
 
-		targetFiles := filePaths[0:itemsInBatch]
-		filePaths = filePaths[itemsInBatch:]
+    for i := 0; i < totalItems; i += itemsInBatch {
+        limit := itemsInBatch
+        if i + itemsInBatch > totalItems {
+            limit = totalItems - i 
+        }
+
+		targetFiles := filePaths[0:limit]
+		filePaths = filePaths[limit:]
 
 		wg.Add(1)
 		go getFilesData(targetFiles, ch, &wg)

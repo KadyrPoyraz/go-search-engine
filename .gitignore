@@ -18,3 +18,5 @@
 target_files/
 *.json
 testDirs
+
+.idea
